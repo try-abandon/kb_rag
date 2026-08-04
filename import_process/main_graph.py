@@ -62,8 +62,8 @@ class MainGraphRunner:
 
 if __name__ == '__main__':
     init_state = {
-        "local_file_path": ".././data/hak180产品安全手册.pdf",
-        "local_dir": ".././data"
+        "local_file_path": "../data/hak180产品安全手册.pdf",
+        "local_dir": "../data"
     }
     result = MainGraphRunner.create_and_run(init_state)
     logger.info(json_format(result))

@@ -197,7 +197,7 @@ if __name__ == '__main__':
     node = NodePDFToMD()
     init_state = {
         "pdf_path": "../../data/hak180产品安全手册.pdf",
-        "local_dir": "../.././data"
+        "local_dir": "../../data"
     }
     result = node(init_state)
     logger.info(json_format(result))

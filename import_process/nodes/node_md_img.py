@@ -176,7 +176,7 @@ class NodeMDImg(NodeBase):
 if __name__ == '__main__':
     node = NodeMDImg()
     init_state = {
-        "md_path": "../.././data/hak180产品安全手册/hak180产品安全手册.md"
+        "md_path": "../../data/hak180产品安全手册/hak180产品安全手册.md"
     }
     result = node(init_state)
     logger.info(json_format(result))
