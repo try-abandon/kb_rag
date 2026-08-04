@@ -21,7 +21,7 @@ class NodeMDImg(NodeBase):
 
     name = "node_md_img"
 
-    def process(self, state: ImportGraphState):
+    def get_md_content(self, state: ImportGraphState):
         # 判断文件路径是否存在
         md_path = state.get("md_path", "")
         if not md_path:
@@ -40,17 +40,9 @@ class NodeMDImg(NodeBase):
             logger.error(f"md文件内容为空")
             raise ValueError(f"md文件内容为空")
 
-        # 获得图片路径
-        md_images_path_obj = md_path_obj.parent / "images"
+        return md_content, md_path_obj
 
-        # 列出图片文件夹中所有文件和文件夹的名字
-        images_name_list = os.listdir(md_images_path_obj)
-
-        # 判断文件夹中是否为空
-        if not images_name_list:
-            logger.error(f"图片文件夹为空")
-            raise ValueError(f"图片文件夹为空")
-
+    def get_image_with_context_list(self, md_content, md_images_path_obj, images_name_list):
         # 所有的图片后缀类型
         IMAGE_EXTENSIONS = {".jpg", ".jpeg", ".png", ".gif", ".bmp", ".webp"}
         MAX_LENGTH = 300
@@ -84,7 +76,9 @@ class NodeMDImg(NodeBase):
                 "post_content": post_content,
                 "image_name": image_name
             })
+        return image_with_context_list
 
+    def get_image_summary_list(self, image_with_context_list):
         llm = init_chat_model(
             model=LLMConfig.llm_default_model,
             model_provider="openai",
@@ -132,9 +126,9 @@ class NodeMDImg(NodeBase):
                             },
                         },
                         {"type": "text", "text": f"""
-                                        这是一张图片，图片上文部分为"{image_with_context.get("pre_content")}"，
-                                        下文部分为"{image_with_context.get("post_content")}"，
-                                        请用中文简要总结这张图片的摘要,字数在50字以内。"""},
+                                                这是一张图片，图片上文部分为"{image_with_context.get("pre_content")}"，
+                                                下文部分为"{image_with_context.get("post_content")}"，
+                                                请用中文简要总结这张图片的摘要,字数在50字以内。"""},
                     ],
                 },
             ]
@@ -145,6 +139,36 @@ class NodeMDImg(NodeBase):
                 "image_path": image_with_context.get("image_path"),
                 "summary": result.content
             })
+
+        return image_with_summary_list
+
+    def process(self, state: ImportGraphState):
+        # 获得md文件内容
+        md_content, md_path_obj = self.get_md_content(state)
+
+        # 获得图片路径
+        md_images_path_obj = md_path_obj.parent / "images"
+        # 判断图片路径是否为空
+        if not md_images_path_obj.exists():
+            logger.error(f"图片文件夹不存在")
+            return {
+                "md_content": md_content,
+            }
+
+        # 列出图片文件夹中所有文件和文件夹的名字
+        images_name_list = os.listdir(md_images_path_obj)
+        # 判断图片文件夹内是否为空
+        if not images_name_list:
+            logger.error(f"图片文件夹为空")
+            return {
+                "md_content": md_content,
+            }
+
+        # 获得包含图片上下文信息的字典列表
+        image_with_context_list = self.get_image_with_context_list(md_content, md_images_path_obj, images_name_list)
+
+        # 获取图片摘要
+        image_with_summary_list = self.get_image_summary_list(image_with_context_list)
 
         return image_with_summary_list
 
