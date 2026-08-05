@@ -13,7 +13,7 @@ def get_minio_client():
     if not minio_client:
         try:
             # 创建客户端
-            minio_client = Minio(
+            client = Minio(
                 endpoint=MinIoConfig.minio_endpoint,
                 access_key=MinIoConfig.minio_access_key,
                 secret_key=MinIoConfig.minio_secret_key,
@@ -22,8 +22,8 @@ def get_minio_client():
 
             # 创建桶
             bucket_name = MinIoConfig.minio_bucket_name
-            if not minio_client.bucket_exists(bucket_name):
-                minio_client.make_bucket(bucket_name)
+            if not client.bucket_exists(bucket_name):
+                client.make_bucket(bucket_name)
 
             # 设置权限
             policy = {
@@ -43,7 +43,8 @@ def get_minio_client():
                     },
                 ],
             }
-            minio_client.set_bucket_policy(bucket_name, json.dumps(policy))
+            client.set_bucket_policy(bucket_name, json.dumps(policy))
+            minio_client = client
         except:
             logger.error(f"创建MinIO客户端失败")
             raise

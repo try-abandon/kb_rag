@@ -150,7 +150,11 @@ class NodeMDImg(NodeBase):
         # 获得minio客户端
         minio_client = get_minio_client()
         # 拿到桶中以前的老照片
-        old_images_list = minio_client.list_objects(bucket_name=MinIoConfig.minio_bucket_name, prefix=upload_dir)
+        old_images_list = minio_client.list_objects(
+            bucket_name=MinIoConfig.minio_bucket_name,
+            prefix=upload_dir,
+            recursive=True                     
+        )
         delete_images_obj_list = [DeleteObject(old_image.object_name) for old_image in old_images_list]
         # 删除桶中的老照片
         errors = minio_client.remove_objects(
@@ -231,7 +235,7 @@ class NodeMDImg(NodeBase):
         new_md_path_obj, md_content = self.replace_md_image(image_with_summary_and_url_list, md_path_obj, md_content)
 
         return {
-            "md_content": md_content,
+            "md_content": md_content
         }
 
 
