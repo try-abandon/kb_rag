@@ -17,28 +17,31 @@ class NodeDocumentSplit(NodeBase):
 
     name = "node_document_split"
 
-    def process(self, state: ImportGraphState):
+    def get_md_content(self, state: ImportGraphState):
         # 判断md文件路径是否存在
-        md_file_path = state.get("md_path", "")
-        if not md_file_path:
+        md_path = state.get("md_path", "")
+        if not md_path:
             logger.error(f"md文件路径必须提供")
             raise ValueError(f"md文件路径必须提供")
 
         # 判断文件是否存在
-        md_file_path_obj = Path(md_file_path)
-        if not md_file_path_obj.exists():
+        md_path_obj = Path(md_path)
+        if not md_path_obj.exists():
             logger.error(f"md文件不存在")
             raise ValueError(f"md文件不存在")
 
         # 判断是否给了文件名称
         file_title = state.get("file_title", "")
         if not file_title:
-            file_title = md_file_path_obj.stem
+            file_title = md_path_obj.stem
 
         # 读取文件中的内容
-        with open(md_file_path_obj, 'r', encoding="utf-8") as f:
+        with open(md_path_obj, 'r', encoding="utf-8") as f:
             md_content = f.read()
 
+        return md_content, file_title, md_path_obj
+
+    def get_block_list(self, md_content, file_title):
         # 统一不同系统中文件中的换行符号
         md_content = md_content.replace("\r\n", "\n").replace("\r", "\n")
 
@@ -62,8 +65,9 @@ class NodeDocumentSplit(NodeBase):
             line = line.strip()
             match = re.match(code_pattern, line)
 
-            # 判断是否在代码块中
+            # 如果是代码块
             if match:
+                # 判断是代码块的开头还是结尾
                 if not is_in_code_block:
                     is_in_code_block = True
                     masker = match.group(1)
@@ -74,15 +78,15 @@ class NodeDocumentSplit(NodeBase):
                         masker = None
                         logger.info(f"代码块结束")
 
-            # 不在代码块，判断是否是标题
+            # 如果不在代码块并且被标题正则匹配，则代表是标题
             if not is_in_code_block and re.match(title_pattern, line):
-                # 将该标题上面的内容列表作为一部分
+                # 切片取到改标题前一块的内容
                 temp_list = md_line_list[current_index: index]
 
-                # 将列表拼合成字符串，形成了包含标题和文档内容的一个content或单独文档
+                # 将temp_list中的内容凭借成字符串
                 content = "\n".join(temp_list)
 
-                # 更新坐标
+                # 更新当前坐标
                 current_index = index
 
                 block_list.append({
@@ -91,13 +95,15 @@ class NodeDocumentSplit(NodeBase):
                     "file_title": file_title
                 })
 
-        # 最后一个区块单独处理，因为他的后续没有标题
-        block_list.append({
-            "title": md_line_list[current_index],
-            "content": "\n".join(md_line_list[current_index:]),
-            "file_title": file_title
-        })
+            # 最后一个区块单独处理，因为他的后续没有标题
+            block_list.append({
+                "title": md_line_list[current_index],
+                "content": "\n".join(md_line_list[current_index:]),
+                "file_title": file_title
+            })
+            return block_list
 
+    def get_final_blocK_list(self, block_list, file_title):
         MAX_LENGTH = 300
         OVER_RAP = 30
         final_block_list = []
@@ -112,14 +118,14 @@ class NodeDocumentSplit(NodeBase):
             title = block.get("title", "")
             content = block.get("content", "")
 
-            # 真正的内容是需要去掉标题的
+            # 真正的content是没有标题的，需要去除标题
             real_content = content[len(title):] if content.startswith("#") else content
 
-            # 如果切分内容的长度小于切分长度就不需要切分
+            # 如果切分内容过短则不进行切分
             if len(real_content) < MAX_LENGTH:
                 final_block_list.append({
                     **block,
-                    "part":0
+                    "part": 0
                 })
                 continue
 
@@ -132,6 +138,7 @@ class NodeDocumentSplit(NodeBase):
                 continue
 
             split_block_list = spliter.split_text(real_content)
+
             for index, split_block in enumerate(split_block_list):
                 final_block_list.append({
                     "title": title,
@@ -140,8 +147,20 @@ class NodeDocumentSplit(NodeBase):
                     "part": index
                 })
 
+        return final_block_list
+
+    def process(self, state: ImportGraphState):
+        # 读取md文档中的内容
+        md_content, file_title, md_path_obj = self.get_md_content(state)
+
+        # 粗切分文档
+        block_list = self.get_block_list(md_content, file_title)
+
+        # 细切分文档
+        final_block_list = self.get_final_blocK_list(block_list, file_title)
+
         # 备份文件
-        with open(md_file_path_obj.parent / "chunks.json", 'w', encoding='utf-8') as f:
+        with open(md_path_obj.parent / "chunks.json", 'w', encoding='utf-8') as f:
             f.write(json_format(final_block_list))
 
         return {
@@ -152,7 +171,7 @@ class NodeDocumentSplit(NodeBase):
 if __name__ == '__main__':
     node = NodeDocumentSplit()
     init_state = {
-        "md_path": "../../data/hak180产品安全手册/hak180产品安全手册.md",
+        "md_path": "../../data/hak180产品安全手册/hak180产品安全手册_new.md",
         "file_title": "hak180产品安全手册"
     }
     result = node(init_state)
