@@ -1,5 +1,10 @@
+import json
+
 from import_process.base import NodeBase
 from import_process.state import ImportGraphState
+from tool.bge_m3_client_tool import get_bge_m3_embedding
+from tool.logger import logger
+from tool.json_format_tool import json_format
 
 
 class NodeBGEEmbedding(NodeBase):
@@ -10,6 +15,37 @@ class NodeBGEEmbedding(NodeBase):
     name = "node_bge_embedding"
 
     def process(self, state: ImportGraphState):
+        chunks = state.get("chunks", "")
+        if not chunks:
+            logger.error("chunks不能为空")
+            raise ValueError("chunks不能为空")
+
+        # 对chunks进行批处理
+        BATCH_SIZE = 3
+        for i in range(0, len(chunks), BATCH_SIZE):
+            chunk_batch_list = chunks[i: i + BATCH_SIZE]
+            chunk_batch_content_list = [f"{chunk.get("item_name")}{chunk.get("content")}" for chunk in chunk_batch_list]
+
+            embedding = get_bge_m3_embedding(chunk_batch_content_list)
+            for idx,chunk in enumerate(chunk_batch_list):
+                chunk["dense_vector"] = embedding.get("dense")[idx]
+                chunk["sparse_vector"] = embedding.get("sparse")[idx]
+        # 备份chunks
+        with open(r"../../data/hak180产品安全手册/embedding_chunks.json", "w", encoding="utf-8") as f:
+            f.write(json_format(chunks))
+
+        return {
+            "chunks": chunks
+        }
 
 
-        return state
+if __name__ == '__main__':
+    node = NodeBGEEmbedding()
+    with open(r"../../data/hak180产品安全手册/item_name_chunks.json", "r",encoding="utf-8") as f:
+        chunks = json.load(f)
+
+    init_state = {
+        "chunks":chunks
+    }
+    result =  node(init_state)
+    logger.info(json_format(result))

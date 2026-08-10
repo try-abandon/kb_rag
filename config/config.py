@@ -33,3 +33,15 @@ class EmbeddingConfig:
     bge_m3 = os.getenv('BGE_M3')
     bge_device = os.getenv('BGE_DEVICE')
     bge_fp16 = True if os.getenv('BGE_FP16') in ("True",1,True,"1") else False
+
+
+class MilvusConfig:
+    milvus_url = os.getenv('MILVUS_URL')
+    chunks_collection = os.getenv('CHUNKS_COLLECTION')
+    item_name_collection = os.getenv('ITEM_NAME_COLLECTION')
+
+
+class MongoConfig:
+    # mongo 服务地址
+    mongo_url = os.getenv('MONGO_URL')
+    mongo_db_name = os.getenv('MONGO_DB_NAME')
