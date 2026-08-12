@@ -38,20 +38,20 @@ class NodeItemNameConfirm(NodeBase):
             update_item_names_and_query(ids, final_item_names, rewritten_query)
         return message_id
 
-    def get_align_item_names(self, final_search_item_names: list[Any], item_names: list[Any]) -> tuple[str, list[Any]]:
+    def get_align_item_names(self, final_match_item_names: list[Any], chat_item_names: list[Any]) -> tuple[str, list[Any]]:
         # 对齐名字
         answer = ""
         final_item_names = []
-        if item_names:
+        if chat_item_names:
             confirm_item_names = [
                 item.get("search_item_name")
-                for item in final_search_item_names
+                for item in final_match_item_names
                 if item.get("score") >= 0.85
             ]
 
             option_item_names = [
                 item.get("search_item_name")
-                for item in final_search_item_names
+                for item in final_match_item_names
                 if 0.6 <= item.get("score") < 0.85
             ]
 
@@ -66,14 +66,14 @@ class NodeItemNameConfirm(NodeBase):
                 answer = "我无法识别您选择的是什么商品"
         return answer, final_item_names
 
-    def get_final_search_item_names(self, item_names: list[Any]) -> list[Any]:
+    def get_final_match_item_names(self, chat_item_names: list[Any]) -> list[Any]:
         # 将大模型得到的主体名字进行向量化，才能进行向量检索
-        embedding = get_bge_m3_embedding(item_names)
+        embedding = get_bge_m3_embedding(chat_item_names)
         collection_name = MilvusConfig.item_name_collection
 
-        final_search_item_names = []
+        final_match_item_names = []
         # 可能生成多个item_name，所以进行遍历
-        for idx, item_name in enumerate(item_names):
+        for idx, chat_item_name in enumerate(chat_item_names):
             dense_data = embedding.get("dense")[idx]
             sparse_data = embedding.get("sparse")[idx]
 
@@ -92,18 +92,18 @@ class NodeItemNameConfirm(NodeBase):
                 output_fields=["item_name"]
             )
 
-            search_item_names = [
+            match_item_names = [
                 {
-                    "original_query": item_name,
+                    "original_query": chat_item_name,
                     "search_item_name": item.get("entity").get("item_name"),
                     "score": item.get("distance")
                 }
                 for item in res[0]
             ]
-            final_search_item_names.extend(search_item_names)
-        return final_search_item_names
+            final_match_item_names.extend(match_item_names)
+        return final_match_item_names
 
-    def get_item_names(self, history_content_str: str, original_query: str) -> tuple[list[Any], Any]:
+    def get_chat_item_names(self, history_content_str: str, original_query: str) -> tuple[list[Any], Any]:
         llm = init_chat_model(
             model=LLMConfig.item_model,
             model_provider="openai",
@@ -130,22 +130,22 @@ class NodeItemNameConfirm(NodeBase):
         # 反序列化，将json转化为dict
         res_dict = json.loads(res_json)
 
-        item_names = res_dict.get("item_names")
+        chat_item_names = res_dict.get("item_names")
         rewritten_query = res_dict.get("rewritten_query")
 
         # 如果有item_names那么清晰其中的空白字符
-        if item_names:
-            item_names = [
-                item_name.replace(" ", "").replace("\n", "").replace("\t", "")
-                for item_name in item_names
+        if chat_item_names:
+            chat_item_names = [
+                chat_item_name.replace(" ", "").replace("\n", "").replace("\t", "")
+                for chat_item_name in chat_item_names
             ]
         else:
-            item_names = []
+            chat_item_names = []
 
         # 如果不存在重写的问题，那么将原始问题传给rewritten_query
         if not rewritten_query:
             rewritten_query = original_query
-        return item_names, rewritten_query
+        return chat_item_names, rewritten_query
 
     def get_history_str(self, state: QueryGraphState) -> tuple[str, str, str, Any]:
         session_id = state.get("session_id")
@@ -175,13 +175,13 @@ class NodeItemNameConfirm(NodeBase):
         history_content_str, message_id, original_query, session_id = self.get_history_str(state)
 
         # 获得ai识别出来的item_names与rewritten_query
-        item_names, rewritten_query = self.get_item_names(history_content_str, original_query)
+        chat_item_names, rewritten_query = self.get_chat_item_names(history_content_str, original_query)
 
         # 获得向量化检索后匹配的item_names
-        final_search_item_names = self.get_final_search_item_names(item_names)
+        final_match_item_names = self.get_final_match_item_names(chat_item_names)
 
         # 获得对齐后的item_names
-        answer, final_item_names = self.get_align_item_names(final_search_item_names, item_names)
+        answer, final_item_names = self.get_align_item_names(final_match_item_names, chat_item_names)
 
         # 回填历史数据
         message_id = self.backfill_historical_data(answer, final_item_names, message_id, rewritten_query, session_id)

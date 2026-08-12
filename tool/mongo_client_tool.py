@@ -74,7 +74,7 @@ def add_or_update_history(session_id, role, text, rewritten_query=None, item_nam
 
 def clear_history(session_id):
     collection = get_mongo_collection()
-    collection.deleteMany({"session_id": session_id})
+    collection.delete_many({"session_id": session_id})
 
 
 def update_item_names_and_query(ids, item_names=None, rewritten_query=None):
