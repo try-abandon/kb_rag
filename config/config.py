@@ -1,6 +1,9 @@
 import os
+from pathlib import Path
 
 from dotenv import load_dotenv
+
+project_root = Path(__file__).parents[1]
 
 env_path = os.path.abspath(os.path.join(os.path.dirname(__file__), "../.env"))
 load_dotenv(dotenv_path=env_path, override=True)

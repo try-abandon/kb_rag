@@ -54,7 +54,7 @@ class NodeImportMilvus(NodeBase):
             ).add_field(
                 field_name="content",
                 datatype=DataType.VARCHAR,
-                max_length=5000,
+                max_length=20000,
             ).add_field(
                 field_name="item_name",
                 datatype=DataType.VARCHAR,

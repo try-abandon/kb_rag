@@ -1,5 +1,6 @@
 import json
 
+from config.config import project_root
 from import_process.base import NodeBase
 from import_process.state import ImportGraphState
 from tool.bge_m3_client_tool import get_bge_m3_embedding
@@ -31,7 +32,8 @@ class NodeBGEEmbedding(NodeBase):
                 chunk["dense_vector"] = embedding.get("dense")[idx]
                 chunk["sparse_vector"] = embedding.get("sparse")[idx]
         # 备份chunks
-        with open(r"../../data/hak180产品安全手册/embedding_chunks.json", "w", encoding="utf-8") as f:
+        file_path = project_root / "data" / "hak180产品安全手册" / "embedding_chunks.json"
+        with open(file_path, "w", encoding="utf-8") as f:
             f.write(json_format(chunks))
 
         return {

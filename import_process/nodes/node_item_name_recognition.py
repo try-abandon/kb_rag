@@ -3,7 +3,7 @@ import json
 from langchain.chat_models import init_chat_model
 from pymilvus import DataType
 
-from config.config import LLMConfig, MilvusConfig
+from config.config import LLMConfig, MilvusConfig, project_root
 from config.prompt import ITEM_NAME_SYSTEM_PROMPT, ITEM_NAME_USER_PROMPT_TEMPLATE
 from import_process.base import NodeBase
 from import_process.state import ImportGraphState
@@ -181,7 +181,8 @@ class NodeItemNameRecognition(NodeBase):
         # 第五大步：插入数据到milvus当中，顺便把item_name回填到每个chunk
         self.insert_data_backup(chunks, collection_name, file_title, item_name, milvus_client)
 
-        with open(r"../../data/hak180产品安全手册/item_name_chunks.json", "w", encoding="utf-8") as f:
+        file_path = project_root / "data" / "hak180产品安全手册" / "item_name_chunks.json"
+        with open(file_path, "w", encoding="utf-8") as f:
             f.write(json_format(chunks))
 
         return {

@@ -95,13 +95,13 @@ class NodeDocumentSplit(NodeBase):
                     "file_title": file_title
                 })
 
-            # 最后一个区块单独处理，因为他的后续没有标题
-            block_list.append({
-                "title": md_line_list[current_index],
-                "content": "\n".join(md_line_list[current_index:]),
-                "file_title": file_title
-            })
-            return block_list
+        # 最后一个区块单独处理，因为他的后续没有标题
+        block_list.append({
+            "title": md_line_list[current_index],
+            "content": "\n".join(md_line_list[current_index:]),
+            "file_title": file_title
+        })
+        return block_list
 
     def get_final_blocK_list(self, block_list, file_title):
         MAX_LENGTH = 300
@@ -139,7 +139,7 @@ class NodeDocumentSplit(NodeBase):
 
             split_block_list = spliter.split_text(real_content)
 
-            for index, split_block in enumerate(split_block_list):
+            for index, split_block in enumerate(split_block_list, start=1):
                 final_block_list.append({
                     "title": title,
                     "content": title + "\n\n" + split_block,
