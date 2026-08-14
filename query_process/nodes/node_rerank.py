@@ -1,3 +1,5 @@
+from typing import Any
+
 from query_process.base import NodeBase
 from query_process.state import QueryGraphState
 from tool.json_format_tool import json_format
@@ -13,36 +15,7 @@ class NodeRerank(NodeBase):
     # 覆盖基类的 name 属性，标识节点名称
     name: str = "node_rerank"
 
-    def process(self, state: QueryGraphState):
-        rrf_chunks = state.get("rrf_chunks")
-        web_search_docs = state.get("web_search_docs")
-
-        # 合并字典列表
-        merge_docs = rrf_chunks + web_search_docs
-        # 整理合并后的字典
-        merge_docs = [
-            {
-                "title": doc.get("item_name", doc.get("title", "")),
-                "content": doc.get("content", ""),
-                "url": doc.get("url", ""),
-                "source": doc.get("source", ""),
-            }
-            for doc in merge_docs
-        ]
-        # logger.info(json_format(merge_docs))
-
-
-        # 调用重排序模型
-        rewritten_query = state.get("rewritten_query")
-        documents = [doc.get("content", "") for doc in merge_docs]
-        result = text_rerank(rewritten_query, documents, len(merge_docs))
-
-        # 将重排后的分数填入merge_docs中
-        for item in result:
-            merge_docs[item.get("index")]["score"] = item.get("score")
-
-        rerank_merge_docs = sorted(merge_docs, key=lambda x: x["score"], reverse=True)
-
+    def cliff_detection(self, rerank_merge_docs: list[dict[str, Any]]) -> list[dict[str, Any]]:
         # 动态 TopK：硬上限：最多取前 N 条（<=10）
         RERANK_MAX_TOPK: int = 10
         # 最小 TopK：至少保留前 N 条（>=1，且 <= RERANK_MAX_TOPK）
@@ -65,6 +38,49 @@ class NodeRerank(NodeBase):
                 return rerank_merge_docs[:i + 1]
         else:
             return rerank_merge_docs[:use_max_topk]
+
+    def rerank(self, merge_docs: list[dict[str, Any]], state: QueryGraphState) -> list[dict[str, Any]]:
+        # 调用重排序模型
+        rewritten_query = state.get("rewritten_query")
+        documents = [doc.get("content", "") for doc in merge_docs]
+        result = text_rerank(rewritten_query, documents, len(merge_docs))
+
+        # 将重排后的分数填入merge_docs中
+        for item in result:
+            merge_docs[item.get("index")]["score"] = item.get("score")
+
+        rerank_merge_docs = sorted(merge_docs, key=lambda x: x["score"], reverse=True)
+        return rerank_merge_docs
+
+    def get_merge_docs(self, state: QueryGraphState) -> list[dict[str, Any]]:
+        rrf_chunks = state.get("rrf_chunks")
+        web_search_docs = state.get("web_search_docs")
+
+        # 合并字典列表
+        merge_docs = rrf_chunks + web_search_docs
+        # 整理合并后的字典
+        merge_docs = [
+            {
+                "title": doc.get("item_name", doc.get("title", "")),
+                "content": doc.get("content", ""),
+                "url": doc.get("url", ""),
+                "source": doc.get("source", ""),
+            }
+            for doc in merge_docs
+        ]
+        # logger.info(json_format(merge_docs))
+        return merge_docs
+
+    def process(self, state: QueryGraphState):
+        # 获得整理好的包含web搜索的chunks和rrf后的chunks
+        merge_docs = self.get_merge_docs(state)
+
+        # 进行重排序
+        rerank_merge_docs = self.rerank(merge_docs, state)
+
+        # 返回断崖检测后的结果
+        return self.cliff_detection(rerank_merge_docs)
+
 
 if __name__ == '__main__':
     node = NodeRerank()
