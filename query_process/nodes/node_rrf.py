@@ -37,7 +37,6 @@ class NodeRrf(NodeBase):
             for idx, chunk in enumerate(chunks, start=1):
                 chunk_id = chunk.get("id")
                 chunk_score = chunk.get("score") + weight / (idx + 60)
-
                 # 如果有相同id，则这个chunk在两个路线中都搜索到了，那么需要将chunk_score添加
                 if chunk_id in final_chunks_dict:
                     final_chunks_dict.get(chunk_id)["score"] += chunk_score

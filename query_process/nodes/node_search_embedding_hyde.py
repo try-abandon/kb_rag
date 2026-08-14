@@ -54,14 +54,8 @@ class NodeSearchEmbeddingHyde(NodeBase):
         dense_data = embedding.get("dense")[0]
         sparse_data = embedding.get("sparse")[0]
 
-        # 整理item_names
-        item_names = [
-            item.replace("\\", '\\\\').replace("'", "\\'").replace('"', '\\"')
-            for item in item_names
-        ]
-
         # 混合搜索添加过滤字段,in后面必须是字符串
-        expr = f"item_name in {json.dumps(item_names)}"
+        expr = f"item_name in {json.dumps(item_names, ensure_ascii=False)}"
 
         reqs = get_reqs(
             dense_data,
