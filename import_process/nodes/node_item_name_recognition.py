@@ -181,9 +181,9 @@ class NodeItemNameRecognition(NodeBase):
         # 第五大步：插入数据到milvus当中，顺便把item_name回填到每个chunk
         self.insert_data_backup(chunks, collection_name, file_title, item_name, milvus_client)
 
-        file_path = project_root / "data" / "hak180产品安全手册" / "item_name_chunks.json"
-        with open(file_path, "w", encoding="utf-8") as f:
-            f.write(json_format(chunks))
+        # file_path = project_root / "data" / "hak180产品安全手册" / "item_name_chunks.json"
+        # with open(file_path, "w", encoding="utf-8") as f:
+        #     f.write(json_format(chunks))
 
         return {
             "item_name": item_name,

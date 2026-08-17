@@ -23,6 +23,7 @@ def get_bge_m3_model():
 def get_bge_m3_embedding(texts: List[str]):
     bge_m3_model = get_bge_m3_model()
     embedding = bge_m3_model.encode_documents(texts)
+    # logger.info(embedding)v
     # return {
     #     "dense":[list([float(item) for item in dense_item]) for dense_item in embedding.get("dense")],
     #     "sparse":[

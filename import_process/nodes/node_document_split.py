@@ -159,9 +159,9 @@ class NodeDocumentSplit(NodeBase):
         # 细切分文档
         final_block_list = self.get_final_blocK_list(block_list, file_title)
 
-        # 备份文件
-        with open(md_path_obj.parent / "chunks.json", 'w', encoding='utf-8') as f:
-            f.write(json_format(final_block_list))
+        # # 备份文件
+        # with open(md_path_obj.parent / "chunks.json", 'w', encoding='utf-8') as f:
+        #     f.write(json_format(final_block_list))
 
         return {
             "chunks": final_block_list

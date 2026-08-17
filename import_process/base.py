@@ -1,7 +1,9 @@
+import time
 from abc import ABC, abstractmethod
 
 from import_process.state import ImportGraphState
 from tool.logger import logger
+from tool.task_utils import add_running_task, add_done_task, add_node_duration
 
 """
 查询流程节点基类
@@ -26,12 +28,18 @@ class NodeBase(ABC):
         try:
             # 1. 开始准备执行节点
             logger.info(f"--- {self.name} 开始啦 ---")
+            add_running_task(state.get("task_id", ""), self.name)
+            start_time = time.time()
 
             # 2. 执行节点
             result = self.process(state)
 
             # 3. 执行节点成功
             logger.info(f"--- {self.name} 完成啦 ---")
+            add_done_task(state.get("task_id", ""), self.name)
+            end_time = time.time()
+
+            add_node_duration(state.get("task_id", ""), self.name, end_time - start_time)
 
             return result
 
