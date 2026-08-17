@@ -14,8 +14,7 @@ _tasks_running_list: Dict[str, List[str]] = defaultdict(list)
 _tasks_done_list: Dict[str, List[str]] = defaultdict(list)
 _tasks_duration: Dict[str, Dict[str, float]] = defaultdict(dict)
 
-
-#整个graph的执行总状态
+# 整个graph的执行总状态
 # key: task_id
 # value: status 字符串（如 processing/completed/failed）
 _tasks_status: Dict[str, str] = {}
@@ -57,6 +56,7 @@ def _to_cn(node_name: str) -> str:
     """将节点名转换为中文展示名；若无映射则返回原名。"""
     return _NODE_NAME_TO_CN.get(node_name, node_name)
 
+
 def add_running_task(task_id: str, node_name: str) -> None:
     """
     添加“正在运行”的节点任务。
@@ -73,6 +73,7 @@ def add_running_task(task_id: str, node_name: str) -> None:
     # 2. 将当前节点加入运行列表（并做去重判断，防止重复添加）
     if node_name not in running:
         running.append(node_name)
+
 
 def add_done_task(task_id: str, node_name: str) -> None:
     """
@@ -96,14 +97,13 @@ def add_done_task(task_id: str, node_name: str) -> None:
         done.append(node_name)
 
 
-
 def get_running_task_list(task_id: str) -> List[str]:
     """
     获取正在运行节点列表（中文展示）。
     """
     # 获取指定任务运行中的节点列表，并统一转换为中文名返回
     running = _tasks_running_list.get(task_id, [])
-    return [ _to_cn(n)  for n in running]
+    return [_to_cn(n) for n in running]
 
 
 def get_done_task_list(task_id: str) -> List[str]:
@@ -115,7 +115,7 @@ def get_done_task_list(task_id: str) -> List[str]:
     return [_to_cn(n) for n in done]
 
 
-def get_task_status(task_id: str ) -> str:
+def get_task_status(task_id: str) -> str:
     """
     获取当前任务状态。
 
@@ -141,14 +141,17 @@ def update_task_status(task_id: str, status_name: str) -> None:
     # 更新指定任务的总体运行状态（如 processing 等）
     _tasks_status[task_id] = status_name
 
+
 def add_node_duration(task_id: str, node_name: str, duration: float) -> None:
     """记录节点耗时（秒）"""
     cn_name = _to_cn(node_name)
     _tasks_duration[task_id][cn_name] = round(duration, 2)
 
+
 def get_node_durations(task_id: str) -> Dict[str, float]:
     """获取所有节点的耗时"""
     return dict(_tasks_duration.get(task_id, {}))
+
 
 def get_task_info(task_id: str) -> Dict[str, Any]:
     """
