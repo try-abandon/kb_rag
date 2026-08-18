@@ -21,9 +21,9 @@ class NodeRerank(NodeBase):
         # 最小 TopK：至少保留前 N 条（>=1，且 <= RERANK_MAX_TOPK）
         RERANK_MIN_TOPK: int = 3  # 总数最少条数
         # 断崖阈值（相对）
-        RERANK_GAP_RATIO: float = 0.90
+        RERANK_GAP_RATIO: float = 0.25
         # 断崖阈值（绝对）
-        RERANK_GAP_ABS: float = 0.90
+        RERANK_GAP_ABS: float = 0.10
         # 这个是当下适合使用的最大 TopK 值，根据文档总数动态调整
         use_max_topk = min(RERANK_MAX_TOPK, len(rerank_merge_docs))
         use_min_topk = min(RERANK_MIN_TOPK, use_max_topk)
@@ -37,7 +37,7 @@ class NodeRerank(NodeBase):
             if ratio_gap > RERANK_GAP_RATIO or abs_gap > RERANK_GAP_ABS:
                 return rerank_merge_docs[:i + 1]
         else:
-            return rerank_merge_docs
+            return rerank_merge_docs[:use_max_topk]
 
     def rerank(self, merge_docs: list[dict[str, Any]], state: QueryGraphState) -> list[dict[str, Any]]:
         # 调用重排序模型
