@@ -22,6 +22,7 @@ class NodeItemNameRecognition(NodeBase):
 
     def get_chunks(self, state):
         chunks = state.get("chunks")
+        logger.info(chunks)
         file_title = state.get("file_title")
         if not chunks:
             logger.error(f"chunks是空的，必须有值才能进行主体识别")

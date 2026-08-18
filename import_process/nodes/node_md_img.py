@@ -82,7 +82,7 @@ class NodeMDImg(NodeBase):
 
     def get_image_summary_list(self, image_with_context_list):
         llm = init_chat_model(
-            model=LLMConfig.llm_default_model,
+            model=LLMConfig.vl_model,
             model_provider="openai",
             base_url=LLMConfig.openai_api_base,
             api_key=LLMConfig.openai_api_key,
@@ -235,7 +235,8 @@ class NodeMDImg(NodeBase):
         new_md_path_obj, md_content = self.replace_md_image(image_with_summary_and_url_list, md_path_obj, md_content)
 
         return {
-            "md_content": md_content
+            "md_content": md_content,
+            "md_path": str(new_md_path_obj)
         }
 
 

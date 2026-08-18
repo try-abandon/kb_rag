@@ -39,6 +39,8 @@ class NodeDocumentSplit(NodeBase):
         with open(md_path_obj, 'r', encoding="utf-8") as f:
             md_content = f.read()
 
+        logger.info(md_content)
+
         return md_content, file_title, md_path_obj
 
     def get_block_list(self, md_content, file_title):
@@ -162,6 +164,7 @@ class NodeDocumentSplit(NodeBase):
         # # 备份文件
         # with open(md_path_obj.parent / "chunks.json", 'w', encoding='utf-8') as f:
         #     f.write(json_format(final_block_list))
+        logger.info(final_block_list)
 
         return {
             "chunks": final_block_list
@@ -171,7 +174,7 @@ class NodeDocumentSplit(NodeBase):
 if __name__ == '__main__':
     node = NodeDocumentSplit()
     init_state = {
-        "md_path": "../../data/hak180产品安全手册/hak180产品安全手册_new.md",
+        "md_path": "../../data/20260817/hak180产品安全手册/hak180产品安全手册_new.md",
         "file_title": "hak180产品安全手册"
     }
     result = node(init_state)
