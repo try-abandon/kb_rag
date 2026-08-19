@@ -42,7 +42,7 @@ class NodeRerank(NodeBase):
     def rerank(self, merge_docs: list[dict[str, Any]], state: QueryGraphState) -> list[dict[str, Any]]:
         # 调用重排序模型
         rewritten_query = state.get("rewritten_query")
-        documents = [doc.get("content", "") for doc in merge_docs]
+        documents = [doc.get("content") if doc.get("content") else "无内容" for doc in merge_docs]
         result = text_rerank(rewritten_query, documents, len(merge_docs))
 
         # 将重排后的分数填入merge_docs中

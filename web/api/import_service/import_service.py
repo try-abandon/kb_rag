@@ -48,7 +48,7 @@ def run_import_graph(task_id, local_dir, local_file_path):
 
 @app.post("/upload")
 async def upload_file(background_tasks: BackgroundTasks, file: UploadFile = File(..., description="上传的pdf文件")):
-    # 第一步生成task_id
+    # 生成task_id
     task_id = str(uuid.uuid4())
 
     # 创建目标目录

@@ -15,6 +15,7 @@ class NodeEntry(NodeBase):
 
     def process(self, state: ImportGraphState):
         local_file_path = state.get("local_file_path", "")
+        logger.info(f"{local_file_path}")
 
         # 防御性编程
         if not local_file_path:

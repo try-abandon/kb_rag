@@ -1,3 +1,4 @@
+import json
 import re
 
 from langchain.chat_models import init_chat_model
@@ -89,6 +90,7 @@ class NodeAnswerOutput(NodeBase):
             put_data(task_id, "delta", {"delta": r.content})
             answer += r.content
         return answer
+
 
     def format_prompt(self, state):
         #     拿到需要的信息,
