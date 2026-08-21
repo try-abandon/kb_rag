@@ -46,13 +46,13 @@ class NodeItemNameConfirm(NodeBase):
             confirm_item_names = [
                 item.get("search_item_name")
                 for item in final_match_item_names
-                if item.get("score") >= 0.85
+                if item.get("score") >= 0.6
             ]
 
             option_item_names = [
                 item.get("search_item_name")
                 for item in final_match_item_names
-                if 0.6 <= item.get("score") < 0.85
+                if 0.4 <= item.get("score") < 0.6
             ]
 
             if confirm_item_names:
@@ -60,10 +60,10 @@ class NodeItemNameConfirm(NodeBase):
                 answer = ""
             elif option_item_names:
                 final_item_names = []
-                answer = f"请选择下列商品名称中的一项:{",".join(option_item_names)}"
+                answer = f"请选择一下景点中的一个进行推荐:{",".join(option_item_names)}"
             else:
                 final_item_names = []
-                answer = "我无法识别您选择的是什么商品"
+                answer = "我无法识别您选择的是什么景点"
         return answer, final_item_names
 
     def get_final_match_item_names(self, chat_item_names: list[Any]) -> list[Any]:
